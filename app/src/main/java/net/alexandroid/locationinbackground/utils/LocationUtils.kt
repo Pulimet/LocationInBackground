@@ -1,23 +1,20 @@
 package net.alexandroid.locationinbackground.utils
 
-import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.IntentSender
-import android.content.pm.PackageManager
-import android.location.Location
 import android.view.View
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
-import androidx.core.content.ContextCompat
 import com.google.android.gms.common.api.ResolvableApiException
-import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.LocationSettingsResponse
+import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.Task
 import com.google.android.material.snackbar.Snackbar
 import net.alexandroid.locationinbackground.R
@@ -77,5 +74,23 @@ object LocationUtils {
         val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
         val settingsClient = LocationServices.getSettingsClient(activity)
         return settingsClient.checkLocationSettings(builder.build())
+    }
+
+    @SuppressLint("MissingPermission")
+    fun requestLocationUpdates(context: Context) {
+        logD()
+        if (!PermissionUtils.isForegroundLocationPermissionGranted(context)) return
+        val locationRequest = LocationRequest.Builder(10000)
+            .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+            .setMinUpdateIntervalMillis(5000)
+            .build()
+
+        LocationServices.getFusedLocationProviderClient(context).requestLocationUpdates(locationRequest, object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult) {
+                locationResult.lastLocation?.let {
+                    logD("latitude: ${it.latitude}, longitude: ${it.longitude}")
+                }
+            }
+        }, null)
     }
 }

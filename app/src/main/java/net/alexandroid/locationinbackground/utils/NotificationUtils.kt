@@ -3,6 +3,7 @@ package net.alexandroid.locationinbackground.utils
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.os.Build
 import androidx.core.app.NotificationCompat
@@ -20,7 +21,7 @@ object NotificationsUtils {
     private const val CHANNEL_ID = "VERBOSE_NOTIFICATION"
     const val NOTIFICATION_ID = 1
 
-    fun createForegroundNotification(message: String, context: Context): Notification {
+    fun createForegroundNotification(message: String, context: Context, cancellationIntent: PendingIntent? = null): Notification {
         makeChannelIfNecessary(context)
 
         // Create the notification
@@ -30,25 +31,21 @@ object NotificationsUtils {
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(Notification.CATEGORY_SERVICE)
+            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE) // Don't wait 10 sec. before shown
             .setVibrate(LongArray(0))
-            .setOngoing(true)
+            .setOngoing(true) // Prevent dismissing
+
+        cancellationIntent?.let {
+            builder.addAction(android.R.drawable.ic_delete, "Cancel", it)
+        }
         return builder.build()
     }
 
     private fun makeChannelIfNecessary(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Create the NotificationChannel, but only on API 26+ because
-            // the NotificationChannel class is new and not in the support library
-            val name = CHANNEL_NAME
-            val description = CHANNEL_DESCRIPTION
-            val importance = NotificationManager.IMPORTANCE_HIGH
-            val channel = NotificationChannel(CHANNEL_ID, name, importance)
-            channel.description = description
-
-            // Add the channel
-            val notificationManager =
-                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?
-
+            val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH)
+            channel.description = CHANNEL_DESCRIPTION
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?
             notificationManager?.createNotificationChannel(channel)
         }
     }
