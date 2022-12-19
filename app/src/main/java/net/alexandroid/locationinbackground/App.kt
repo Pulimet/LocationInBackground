@@ -36,13 +36,13 @@ class App : Application(), LifecycleEventObserver {
 
     private fun launch() {
         when {
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+/*            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
                 logD("Trying to start a work. (API 31+)")
                 val request = OneTimeWorkRequest.Builder(LocationWorker::class.java)
                     .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                     .build()
                 WorkManager.getInstance(applicationContext).enqueue(request)
-            }
+            }*/
 
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.O -> {
                 logD("Trying to start the foreground service (API 26-30")
