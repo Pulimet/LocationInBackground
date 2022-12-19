@@ -16,7 +16,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.work.OneTimeWorkRequest
+import androidx.work.OutOfQuotaPolicy
+import androidx.work.WorkManager
 import net.alexandroid.locationinbackground.service.LocationService
+import net.alexandroid.locationinbackground.service.LocationWorker
 import net.alexandroid.locationinbackground.ui.theme.LocationInBackgroundTheme
 import net.alexandroid.locationinbackground.utils.LocationUtils
 import net.alexandroid.locationinbackground.utils.PermissionUtils
@@ -121,10 +125,24 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun onBtnClick() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(Intent(this, LocationService::class.java))
-        } else {
-            startService(Intent(this, LocationService::class.java))
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+                logD("Trying to start a work. (API 31+)")
+                val request = OneTimeWorkRequest.Builder(LocationWorker::class.java)
+                    .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                    .build()
+                WorkManager.getInstance(applicationContext).enqueue(request)
+            }
+
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O -> {
+                logD("Trying to start the foreground service (API 26-30")
+                this.startForegroundService(Intent(this, LocationService::class.java))
+            }
+
+            else -> {
+                logD("Trying to start the foreground service (Before Oreo - API 26)")
+                this.startService(Intent(this, LocationService::class.java))
+            }
         }
     }
 
