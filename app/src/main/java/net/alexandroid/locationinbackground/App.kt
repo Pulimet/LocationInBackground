@@ -23,8 +23,8 @@ class App : Application(), LifecycleEventObserver {
     override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
         when (event) {
             Lifecycle.Event.ON_STOP -> {
-                logD("onStop event. Waiting 5 seconds.")
-                Thread.sleep(5000)
+                //logD("onStop event. Waiting 5 seconds.")
+                //Thread.sleep(5000)
                 //launch()
             }
 
@@ -34,6 +34,7 @@ class App : Application(), LifecycleEventObserver {
         }
     }
 
+    @Suppress("unused")
     private fun launch() {
         when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {

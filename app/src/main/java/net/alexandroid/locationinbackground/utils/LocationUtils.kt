@@ -47,7 +47,7 @@ object LocationUtils {
         logD()
         val rootView: View = activity.findViewById(android.R.id.content)
         Snackbar.make(
-            rootView, R.string.location_rationale, Snackbar.LENGTH_INDEFINITE
+            rootView, R.string.rationale, Snackbar.LENGTH_INDEFINITE
         ).setAction(android.R.string.ok) {
             onOkClick()
         }.show()
@@ -79,7 +79,6 @@ object LocationUtils {
     @SuppressLint("MissingPermission")
     fun requestLocationUpdates(context: Context) {
         logD()
-        if (!PermissionUtils.isForegroundLocationPermissionGranted(context)) return
         val locationRequest = LocationRequest.Builder(10000)
             .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
             .setMinUpdateIntervalMillis(5000)

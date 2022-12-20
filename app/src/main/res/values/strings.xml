@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">LocationInBackground</string>
-    <string name="location_rationale">Location rationale message</string>
+    <string name="rationale">Rationale message</string>
     <string name="bg_location_rationale">Background location rationale message</string>
     <string name="permission_notification_rationale">Permissions rationale\n</string>
     <string name="no_thanks">No, thanks</string>

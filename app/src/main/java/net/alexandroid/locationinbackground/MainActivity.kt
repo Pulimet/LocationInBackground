@@ -1,6 +1,5 @@
 package net.alexandroid.locationinbackground
 
-import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.os.Build
@@ -16,29 +15,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.work.OneTimeWorkRequest
-import androidx.work.OutOfQuotaPolicy
-import androidx.work.WorkManager
+import net.alexandroid.locationinbackground.permissions.Permission
+import net.alexandroid.locationinbackground.permissions.PermissionResult
+import net.alexandroid.locationinbackground.permissions.Permissions
 import net.alexandroid.locationinbackground.service.LocationService
-import net.alexandroid.locationinbackground.service.LocationWorker
 import net.alexandroid.locationinbackground.ui.theme.LocationInBackgroundTheme
 import net.alexandroid.locationinbackground.utils.LocationUtils
-import net.alexandroid.locationinbackground.utils.PermissionUtils
 import net.alexandroid.locationinbackground.utils.logD
-import net.alexandroid.locationinbackground.utils.logW
 
 class MainActivity : ComponentActivity() {
-    private val requestLocationPermissions =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            PermissionUtils.printLog(permissions)
-            checkForegroundPermission()
-        }
-
-    private val requestNotificationPermission =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-            logD("isGranted: $isGranted")
-        }
-
+    private val permissions by Permissions()
 
     private val requestLocationSettingsOn =
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { activityResult ->
@@ -50,15 +36,34 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ui()
-        checkForegroundPermission()
-        PermissionUtils.askNotificationPermission(this) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        getForegroundLocationPermission()
+    }
+
+    private fun getForegroundLocationPermission() {
+        permissions.request(Permission.LOCATION_FOREGROUND) {
+            logD("LOCATION_FOREGROUND Permission result: ${it.javaClass.simpleName}")
+            if (it is PermissionResult.Granted) {
+                getBackGroundPermission()
             }
+        }
+    }
+
+    private fun getBackGroundPermission() {
+        permissions.request(Permission.LOCATION_BACKGROUND) {
+            logD("LOCATION_BACKGROUND Permission result: ${it.javaClass.simpleName}")
+            if (it is PermissionResult.Granted) {
+                getNotificationPermission()
+            }
+        }
+    }
+
+    private fun getNotificationPermission() {
+        permissions.request(Permission.NOTIFICATIONS) {
+            logD("NOTIFICATIONS Permission result: ${it.javaClass.simpleName}")
+            checkDeviceLocation()
         }
     }
 
@@ -71,35 +76,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    private fun checkForegroundPermission() {
-        if (!PermissionUtils.isForegroundLocationPermissionGranted(this)) {
-            logW("Location permissions not granted")
-            PermissionUtils.foregroundLocationPermissionCheckFlow(
-                this,
-                requestLocationPermissions,
-                permissionGranted = { checkDeviceLocation() }
-            )
-            return
-        }
-        logD("Location permissions granted")
-        checkDeviceLocation()
-    }
-
-    // TODO Not sure I need it, leaving it here for now
-    private fun checkBackGroundPermission() {
-        if (!PermissionUtils.isBackgroundPermissionGranted(this)) {
-            logW("Location permissions not granted")
-            PermissionUtils.locationPermissionCheckFlow(
-                this,
-                requestLocationPermissions,
-                permissionGranted = { checkDeviceLocation() }
-            )
-            return
-        }
-        logD("Location permissions granted")
-        checkDeviceLocation()
     }
 
     private fun checkDeviceLocation(resolve: Boolean = true) {
@@ -126,13 +102,13 @@ class MainActivity : ComponentActivity() {
 
     private fun onBtnClick() {
         when {
-/*            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-                logD("Trying to start a work. (API 31+)")
-                val request = OneTimeWorkRequest.Builder(LocationWorker::class.java)
-                    .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                    .build()
-                WorkManager.getInstance(applicationContext).enqueue(request)
-            }*/
+            /*            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+                            logD("Trying to start a work. (API 31+)")
+                            val request = OneTimeWorkRequest.Builder(LocationWorker::class.java)
+                                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                                .build()
+                            WorkManager.getInstance(applicationContext).enqueue(request)
+                        }*/
 
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.O -> {
                 logD("Trying to start the foreground service (API 26-30")
