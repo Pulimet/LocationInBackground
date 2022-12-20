@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -83,9 +84,21 @@ class MainActivity : ComponentActivity() {
         LocationUtils.checkDeviceLocationSettings(
             this,
             requestLocationSettingsOn,
-            onLocationEnabled = { logD("Device location enabled") },
+            onLocationEnabled = {
+                logD("Device location enabled")
+                openButteryOptimizationSetting()
+            },
             resolve
         )
+    }
+
+    private fun openButteryOptimizationSetting() {
+        logD()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startActivity(Intent().apply {
+                action = Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS
+            })
+        }
     }
 
     // UI
