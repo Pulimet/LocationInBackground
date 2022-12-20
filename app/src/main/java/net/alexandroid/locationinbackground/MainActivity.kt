@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -93,13 +94,16 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun openButteryOptimizationSetting() {
-        logD()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        logD("isIgnoringBatteryOptimizations: ${isIgnoringBatteryOptimizations()}")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !isIgnoringBatteryOptimizations()) {
             startActivity(Intent().apply {
                 action = Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS
             })
         }
     }
+
+    private fun isIgnoringBatteryOptimizations() =
+        (getSystemService(POWER_SERVICE) as PowerManager).isIgnoringBatteryOptimizations(applicationContext.packageName)
 
     // UI
     @Composable
