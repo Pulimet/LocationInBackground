@@ -1,6 +1,5 @@
 package net.alexandroid.locationinbackground.permissions
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Build
@@ -9,31 +8,11 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import net.alexandroid.locationinbackground.Permissions
 import net.alexandroid.locationinbackground.R
 import net.alexandroid.locationinbackground.utils.logD
-import kotlin.properties.ReadOnlyProperty
-import kotlin.reflect.KProperty
 
-@SuppressLint("InlinedApi")
-enum class Permission(val value: String) {
-    STORAGE(Manifest.permission.READ_EXTERNAL_STORAGE),
-    LOCATION_FOREGROUND(Manifest.permission.ACCESS_FINE_LOCATION),
-    LOCATION_BACKGROUND(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
-    NOTIFICATIONS(Manifest.permission.POST_NOTIFICATIONS);
-
-    companion object {
-        infix fun from(value: String?): Permission? = Permission.values().firstOrNull { it.value == value }
-    }
-}
-
-sealed class PermissionResult {
-    object NotRequired : PermissionResult()
-    object Granted : PermissionResult()
-    object NotGranted : PermissionResult()
-    object RequiresOtherPermission : PermissionResult()
-}
-
-class Permissions : ReadOnlyProperty<ComponentActivity, Permissions> {
+class PermissionsImpl : Permissions {
     companion object {
         private const val MAX_ATTEMPTS = 3
     }
@@ -44,20 +23,30 @@ class Permissions : ReadOnlyProperty<ComponentActivity, Permissions> {
     private var isRequested = false
     private lateinit var componentActivity: ComponentActivity
     private lateinit var requestPermissions: ActivityResultLauncher<Array<String>>
-    private var onPermissionGranted: ((PermissionResult) -> Unit)? = null
+    private lateinit var onPermissionResult: ((PermissionResult) -> Unit)
     private var attempts = 0
 
-    override fun getValue(thisRef: ComponentActivity, property: KProperty<*>): Permissions {
+    override fun requestPermission(
+        owner: ComponentActivity,
+        permission: Permission,
+        callback: (PermissionResult) -> Unit
+    ) {
         logD("Set attempts to be 0")
         attempts = 0
-        componentActivity = thisRef
+        componentActivity = owner
+        onPermissionResult = callback
+        registerForActivityResult()
+        checkPermission(permission)
+    }
+
+    private fun registerForActivityResult() {
         if (!isRegistered) {
             isRegistered = true
-            requestPermissions = thisRef.registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-                permissions?.let { onPermissionsResult(it) }
-            }
+            requestPermissions =
+                componentActivity.registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+                    permissions?.let { onPermissionsResult(it) }
+                }
         }
-        return this
     }
 
     private fun onPermissionsResult(permissions: Map<String, @JvmSuppressWildcards Boolean>) {
@@ -66,19 +55,16 @@ class Permissions : ReadOnlyProperty<ComponentActivity, Permissions> {
         isRequested = false
         val permissionEntry = permissions.entries.first()
         val permission = Permission.from(permissionEntry.key) ?: return
-        onPermissionGranted?.let {
-            request(permission, it)
-        }
+        checkPermission(permission)
     }
 
-    fun request(permission: Permission, onPermissionRequestResult: (PermissionResult) -> Unit) {
-        this.onPermissionGranted = onPermissionRequestResult
+    private fun checkPermission(permission: Permission) {
         logD("Attempts: $attempts, Permission: ${permission.value}")
         when {
-            isNotRequiredForThisApi(permission) -> onPermissionRequestResult(PermissionResult.NotRequired)
-            isRequiresOtherPermissions(permission) -> onPermissionRequestResult(PermissionResult.RequiresOtherPermission)
-            isGranted(permission) -> onPermissionRequestResult(PermissionResult.Granted)
-            attempts == MAX_ATTEMPTS -> onPermissionRequestResult(PermissionResult.NotGranted)
+            isNotRequiredForThisApi(permission) -> onPermissionResult(PermissionResult.NotRequired)
+            isRequiresOtherPermissions(permission) -> onPermissionResult(PermissionResult.RequiresOtherPermission)
+            isGranted(permission) -> onPermissionResult(PermissionResult.Granted)
+            attempts == MAX_ATTEMPTS -> onPermissionResult(PermissionResult.NotGranted)
             shouldShowRationale(permission) -> showRationale(permission)
             else -> launchRequestPermission(permission)
         }

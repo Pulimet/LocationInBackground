@@ -19,14 +19,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import net.alexandroid.locationinbackground.permissions.Permission
 import net.alexandroid.locationinbackground.permissions.PermissionResult
-import net.alexandroid.locationinbackground.permissions.Permissions
+import net.alexandroid.locationinbackground.permissions.PermissionsImpl
 import net.alexandroid.locationinbackground.service.LocationService
 import net.alexandroid.locationinbackground.ui.theme.LocationInBackgroundTheme
 import net.alexandroid.locationinbackground.utils.LocationUtils
 import net.alexandroid.locationinbackground.utils.logD
 
-class MainActivity : ComponentActivity() {
-    private val permissions by Permissions()
+class MainActivity : ComponentActivity(), Permissions by PermissionsImpl() {
+    // private val permissions by PermissionsAsProperty()
 
     private val requestLocationSettingsOn =
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { activityResult ->
@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun getForegroundLocationPermission() {
-        permissions.request(Permission.LOCATION_FOREGROUND) {
+        requestPermission(this, Permission.LOCATION_FOREGROUND) {
             logD("LOCATION_FOREGROUND Permission result: ${it.javaClass.simpleName}")
             if (it is PermissionResult.Granted) {
                 getBackGroundPermission()
@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun getBackGroundPermission() {
-        permissions.request(Permission.LOCATION_BACKGROUND) {
+        requestPermission(this, Permission.LOCATION_BACKGROUND) {
             logD("LOCATION_BACKGROUND Permission result: ${it.javaClass.simpleName}")
             if (it is PermissionResult.Granted) {
                 getNotificationPermission()
@@ -63,7 +63,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun getNotificationPermission() {
-        permissions.request(Permission.NOTIFICATIONS) {
+        requestPermission(this, Permission.NOTIFICATIONS) {
             logD("NOTIFICATIONS Permission result: ${it.javaClass.simpleName}")
             checkDeviceLocation()
         }
