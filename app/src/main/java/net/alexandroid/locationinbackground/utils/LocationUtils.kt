@@ -46,9 +46,7 @@ object LocationUtils {
     private fun showLocationRequiredError(activity: Activity, onOkClick: () -> Unit) {
         logD()
         val rootView: View = activity.findViewById(android.R.id.content)
-        Snackbar.make(
-            rootView, R.string.rationale, Snackbar.LENGTH_INDEFINITE
-        ).setAction(android.R.string.ok) {
+        Snackbar.make(rootView, R.string.rationale, Snackbar.LENGTH_INDEFINITE).setAction(android.R.string.ok) {
             onOkClick()
         }.show()
     }
@@ -68,9 +66,7 @@ object LocationUtils {
 
     private fun getLocationSettingsTask(activity: Activity): Task<LocationSettingsResponse> {
         logD()
-        val locationRequest = LocationRequest.create().apply {
-            priority = LocationRequest.PRIORITY_LOW_POWER
-        }
+        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_LOW_POWER, 1000).build()
         val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
         val settingsClient = LocationServices.getSettingsClient(activity)
         return settingsClient.checkLocationSettings(builder.build())
