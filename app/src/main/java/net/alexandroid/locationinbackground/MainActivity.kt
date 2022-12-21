@@ -23,6 +23,7 @@ import net.alexandroid.locationinbackground.permissions.PermissionsImpl
 import net.alexandroid.locationinbackground.service.LocationService
 import net.alexandroid.locationinbackground.ui.theme.LocationInBackgroundTheme
 import net.alexandroid.locationinbackground.utils.LocationUtils
+import net.alexandroid.locationinbackground.utils.SettingsUtil
 import net.alexandroid.locationinbackground.utils.logD
 
 class MainActivity : ComponentActivity(), Permissions by PermissionsImpl() {
@@ -87,23 +88,11 @@ class MainActivity : ComponentActivity(), Permissions by PermissionsImpl() {
             requestLocationSettingsOn,
             onLocationEnabled = {
                 logD("Device location enabled")
-                openButteryOptimizationSetting()
+                SettingsUtil.openButteryOptimizationSetting(this)
             },
             resolve
         )
     }
-
-    private fun openButteryOptimizationSetting() {
-        logD("isIgnoringBatteryOptimizations: ${isIgnoringBatteryOptimizations()}")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !isIgnoringBatteryOptimizations()) {
-            startActivity(Intent().apply {
-                action = Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS
-            })
-        }
-    }
-
-    private fun isIgnoringBatteryOptimizations() =
-        (getSystemService(POWER_SERVICE) as PowerManager).isIgnoringBatteryOptimizations(applicationContext.packageName)
 
     // UI
     @Composable
